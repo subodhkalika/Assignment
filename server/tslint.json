@@ -1,0 +1,14 @@
+{
+  "extends": "tslint-config-shopify",
+  "rules": {
+    "no-require-imports": false,
+    "no-console": false,
+    "member-ordering": [
+      false
+    ],
+    "variable-name": [
+      true,
+      "allow-snake-case"
+    ]
+  }
+}
