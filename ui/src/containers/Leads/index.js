@@ -41,7 +41,6 @@ export function Leads(props) {
     }]);
 
     const setActiveTab = (selectedHeader) => {
-        console.log(selectedHeader)
         const newHeader = [...headers].map(header => {
             return {
                 ...header,
