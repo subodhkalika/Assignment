@@ -8,17 +8,17 @@ To run the frontend individually, run:
  - npm start
 
 The folder structure maintains the separation of concern. A brief smmary is as follows: 
-a. containers: This folder would contain the pages in our application.
-b. components: This folder contains custom components that can be reused in our applicaiton.
-c. config: contains configuration for axios. Further configuration can be added later on.
-d. util: contains utility files with functions that can be used throughout the application.
+1. containers: This folder would contain the pages in our application.
+2. components: This folder contains custom components that can be reused in our applicaiton.
+3. config: contains configuration for axios. Further configuration can be added later on.
+4. util: contains utility files with functions that can be used throughout the application.
 
 Dependency ibraries added: 
-    axios: To make API calls to the server
-    font-awesome: Font awesome library for icons
-    react-redux: Using react redux for implemening redux in react app
-    redux: Using redux as state management tool
-    styled-components: To create comonents with css in JS file.
+1.    axios: To make API calls to the server
+2.    font-awesome: Font awesome library for icons
+3.    react-redux: Using react redux for implemening redux in react app
+4.    redux: Using redux as state management tool
+5.    styled-components: To create comonents with css in JS file.
 
 Each containers(pages) created into the containers folder will have its own actions, constantsm, enums, reducers and selectors file. This design is used to  create a sclable solution for the applicaiton as it is easier to maintain individual modules even when the project grows to a large codebase. 
 
