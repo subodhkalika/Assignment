@@ -38,6 +38,7 @@ The folder structure is as follows:
 4. handlers: Utility function, Currently only logging.
 5. Routes: Contains API routes
 
+TypeORM is a Object Relational Mapper library used to scaffold the models and connect to the MYSQL database.
 
 If further time is provided, I would add the unit testing scripts for both Frontend and Backend.
 
