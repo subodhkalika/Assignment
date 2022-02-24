@@ -1,44 +1,113 @@
-Your Solution Documentation
-===========================
+const { argv } = require('yargs');
+const csv = require('fast-csv');
+const fs = require('fs');
+const path = require('path');
+const { isEmpty } = require('lodash');
 
-Frontend:
-The frontend is built in ReactJs. It resides on ui folder.
+const execute = () => {
 
-To run the frontend individually, run:
- - npm start
+  const files = getArgs();  
+  console.log(`processing ${files.input}...`);
 
-The folder structure maintains the separation of concern. A brief smmary is as follows: 
-1. containers: This folder would contain the pages in our application.
-2. components: This folder contains custom components that can be reused in our applicaiton.
-3. config: contains configuration for axios. Further configuration can be added later on.
-4. util: contains utility files with functions that can be used throughout the application.
+  processFile(files.input, files.output);
+}
 
-Dependency ibraries added: 
-1.    axios: To make API calls to the server
-2.    font-awesome: Font awesome library for icons
-3.    react-redux: Using react redux for implemening redux in react app
-4.    redux: Using redux as state management tool
-5.    styled-components: To create comonents with css in JS file.
+const getArgs = () => {
+  const usage = () => {
+    const doc = `
+      Usage:
+        node process-file.js --filename=<input_file>.csv --output=<output_file>.csv
+  
+      Args:
+         --filename                      The file to be processed
+         --output                        The file in which to save the output. Defaults to output.csv if not specified
+      `;
+    console.log(doc);
+  }
 
-Each containers(pages) created into the containers folder will have its own actions, constantsm, enums, reducers and selectors file. This design is used to  create a sclable solution for the applicaiton as it is easier to maintain individual modules even when the project grows to a large codebase. 
+  if (!argv.filename) {
+    usage();
+    throw Error('Missing required parameter "filename"');
+  }
+  
+  const files = {
+    input: argv.filename,
+    output: path.resolve(__dirname, argv.output || 'output.csv'),
+  }
 
-The custom components developed are: 
-1. Tabs: This components is used to display the tabs design of the UI. It contains several styled components like TabHeader, Tab,   TabBody. The reason for using the styled components is that it can be tested as it provides swift integration libraries like Jest.
-2. JobCard: 
-This component displays the card for each job in the UI. it utilises sevel styled components which can be reused easily.
-    
+  return files;
+}
 
-Backend:
-Express Js is used to the build the backend. To keep the development strictly typed, typescript has been  used to write the backend.
+const validateParsedFile = (parsedFile) => {
+  return parsedFile.validate(
+    (row, cb) => {
+      if (isEmpty(row.debtor)) {
+        return cb(null, false, 'Missing value: debtor');
+      }
+      if (isEmpty(row.creditor)) {
+        return cb(null, false, 'Missing value: creditor');
+      }
+      if (isNaN(row.debit)) {
+        return cb(null, false, 'Invalid debit value');
+      }
+      return cb(null, true);
+    });
+}
 
-The folder structure is as follows:
-1. Config: Contains configurations for database and server
-2. Controllers: Contains API for Jobs.
-3. Entities: Contains Jobs, Category and Suburb entities used as model for the database.
-4. handlers: Utility function, Currently only logging.
-5. Routes: Contains API routes
+const checkForDataInvalid = (validated) => {
+  return validated.on('data-invalid', (row, rowNumber, reason) => { throw Error(`${reason} [row: ${rowNumber}] [row=${JSON.stringify(row)}]`) })
+}
 
-TypeORM is a Object Relational Mapper library used to scaffold the models and connect to the MYSQL database.
+const summarize = (fileAfterInvalidCheck, outputFile) => {
+  const debtList = [];
+  fileAfterInvalidCheck.on('data', data => {
+    data = {
+      debtor: data.debtor,
+      creditor: data.creditor,
+      debit: Number(data.debit),
+    }
 
-If further time is provided, I would add the unit testing scripts for both Frontend and Backend.
+    const debtListItem = debtList.find(item => `${item.debtor}-${item.creditor}` === `${data.debtor}-${data.creditor}`);
+    if (!debtListItem) {
+      debtList.push(data);
+    } else {
+      debtListItem.debit += data.debit;
+    }
+  })
+  .on('end', () => {
+    debtList.sort(function (a, b) {
+      if (a.debtor != b.debtor) {
+        return a.debtor.localeCompare(b.debtor);
+      }
+      return a.creditor.localeCompare(b.creditor);
+    });
+
+    const outputStream = fs.createWriteStream(outputFile);
+    console.log(`Writing to ${outputFile}...`);
+    csv
+      .write(debtList)
+      .pipe(outputStream);
+  })
+}
+
+const processFile = (inputFile, outputFile) => {
+
+  if (typeof inputFile !== 'string') {
+    throw Error('You have entered incorrect value "filename"');
+  }
+  const parsedFile = csv.parseFile(inputFile, { headers: ['debtor', 'creditor', 'debit'], ignoreEmpty: true, strictColumnHandling: true })
+  const validated = validateParsedFile(parsedFile);
+  const fileAfterInvalidCheck = checkForDataInvalid(validated);
+  summarize(fileAfterInvalidCheck, outputFile);
+
+  console.log('Complete');
+  console.log(path.resolve(__dirname, 'test', 'testFiles'));
+}
+
+module.exports = {
+  execute,
+  processFile
+}
+
+
 
